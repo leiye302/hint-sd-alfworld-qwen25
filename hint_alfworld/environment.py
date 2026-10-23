@@ -110,9 +110,10 @@ class Service:
         if operation == 'health':
             return {'ready': True, 'pid': os.getpid()}
         if operation == 'create':
-            game = Game(value['task'], self.max_steps)
-            identity = uuid.uuid4().hex
             with self.lock:
+                # Gym's environment registry is process-global; serialize registrations only.
+                game = Game(value['task'], self.max_steps)
+                identity = uuid.uuid4().hex
                 self.games[identity] = game
             return dict(game.state(), instance_id=identity)
         identity = value['instance_id']
@@ -143,13 +144,13 @@ class Client:
             raise ValueError('This private environment service must use a loopback URL')
         self.url = url.rstrip('/')
 
-    def call(self, operation, **payload):
+    def call(self, operation, *, timeout=300, **payload):
         # Environment mutations are deliberately NOT blindly retried after transport failures.
         request = urllib.request.Request(self.url + '/' + operation,
             data=json.dumps(payload).encode(), headers={'Content-Type': 'application/json'}, method='POST')
         # The stdlib controller also works on a fresh system Python without pip-installed requests.
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        with opener.open(request, timeout=300) as response:
+        with opener.open(request, timeout=timeout) as response:
             return json.load(response)
 
 

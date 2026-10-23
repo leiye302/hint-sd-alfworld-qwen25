@@ -69,7 +69,8 @@ python3 -m hint_alfworld.setup --prepare-data
 python3 -m hint_alfworld.setup --verify
 
 # CPU检查，和正式GPU训练分开。
-uv run --no-project --with pytest --with torch --python 3.13 python -m pytest tests -q
+uv pip install --python .deps/hint-sd/.venv/bin/python pytest==8.3.5
+.deps/hint-sd/.venv/bin/python -m pytest tests -q
 bash scripts/run_both.sh --dry-run
 ```
 

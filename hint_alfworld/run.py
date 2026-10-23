@@ -71,8 +71,6 @@ def launch(args):
         if output.exists():
             raise FileExistsError('Output already exists; use --resume or a different --output')
         resume = None
-        output.mkdir(parents=True)
-        atomic_json(output / 'binding.json', binding)
     model_directory = ROOT / 'models' / config['model']['model_id'].split('/')[-1]
     model_receipt = json.loads((model_directory / 'download_receipt.json').read_text())
     if model_receipt['model_id'] != config['model']['model_id'] or model_receipt['revision'] != config['model']['revision']:
@@ -88,6 +86,9 @@ def launch(args):
     environment_python = Path(os.environ.get('HINTSD_ENV_PYTHON', ROOT / '.env-alfworld/bin/python'))
     if not training_python.is_file() or not environment_python.is_file():
         raise ValueError('Missing runtime. Run scripts/setup.sh first')
+    if not args.resume:
+        output.mkdir(parents=True)
+        atomic_json(output / 'binding.json', binding)
     env = dict(os.environ, PYTHONPATH=str(ROOT), TOKENIZERS_PARALLELISM='false',
                CUDA_VISIBLE_DEVICES=str(args.train_gpu), HINTSD_INFERENCE_GPU=str(args.infer_gpu))
     for name in ('RANK', 'LOCAL_RANK', 'WORLD_SIZE', 'MASTER_ADDR', 'MASTER_PORT'):
@@ -105,7 +106,7 @@ def launch(args):
                 if service.poll() is not None:
                     raise RuntimeError('CPU environment service failed; inspect environment.log')
                 try:
-                    if client.call('health').get('pid') == service.pid:
+                    if client.call('health', timeout=2).get('pid') == service.pid:
                         break
                 except Exception:
                     pass
