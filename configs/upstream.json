@@ -1,0 +1,32 @@
+{
+  "hint_sd": {
+    "repository": "https://github.com/wgcyeo/HINT-SD.git",
+    "commit": "bc95b44192b06328a88773dbf3b345fa1c499093",
+    "files": {
+      "src/train/trainer.py": "23e36f63a4a93e4b8d577f05cb165a36b98db766d45df30501e2a73bb00f6121",
+      "src/train/self_distillation.py": "036defffa3d3f1a7abc39a6f95200d09f3f5940ebbde804fcd0ce6831b8f54d6",
+      "src/train/train.py": "802e50fe950e240b14dada8993085de8a79039cc1506b625eb466ba04b5eeaa4",
+      "src/train/arguments.py": "f7770c86e9c95d96d271a618d45904f7a3db906bf8e2ebf34e16e8566954cc3e",
+      "src/train/rollout.py": "5a9f608825adbedf84fcff46ab36b35e29c57f5886f2f70d58676baa10cb94cf",
+      "src/train/bfcl_rollout.py": "f0da3cba10fe6c86431ddb90cfb4ae562b098810dd0d9242cdbfcf5cf7b296cc",
+      "src/train/appworld_feedback.py": "3feeaf25908aeb08cd9e5320a00739de51f2821eea916798bab645276b248ec5",
+      "src/train/bfcl_feedback.py": "217ac0874079b2c61fb76177bdd80a34efe36bab351bfc9f22d20c564b89ded3",
+      "env/integration/bfcl/env_service_backend.py": "c6a6662a130fa87ab80aa094f0dc528bbc70468c084628199bcbb0e000c83bcb",
+      "pyproject.toml": "3da0a3ae64c92af0cccb0b44ece6e3b314bc8622537767d9607b79ef82e8076c",
+      "uv.lock": "110d77e12f33f1ac163fc39bb3b98ac0253ae510f3eaa00cf552a7dd6adbf306",
+      "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  },
+  "sdar_environment": {
+    "repository": "https://github.com/ZJU-REAL/SDAR.git",
+    "commit": "29dcb12a55d8fc17ba6ae03fd0a69048f43051f3",
+    "files": {
+      "agent_system/environments/prompts/alfworld.py": "f24267701a1d0fffb81c6e9b69f259d63dba9378515db4764f82f13f23bc9084",
+      "agent_system/environments/env_package/alfworld/projection.py": "e794d1217d613ef4b550cfe4bfd0b39b4deb10d47493f31f78aef7b5ebf6dd98",
+      "agent_system/environments/env_package/alfworld/configs/config_tw.yaml": "a33f87ab43253ea602f93c9a0b176771a8ae16a34cd953130e45fc03700f1f49",
+      "agent_system/environments/env_package/alfworld/alfworld/agents/environment/alfred_tw_env.py": "2d66f552c57ef853e734bab2ebca0eb18ade69198ab63ff7858de93f658b8c22",
+      "agent_system/environments/env_package/alfworld/alfworld/agents/utils/misc.py": "28972caffbf77c3ab2cfad9789a91cc02ace472f4a90769937c11024e18f5e44"
+    }
+  },
+  "seen140_sha256": "e417e7fa9cc65e299e7e26a79394dafaec80215be755fb34a72f2c28d36e268d"
+}

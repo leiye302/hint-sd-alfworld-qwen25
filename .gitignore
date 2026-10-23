@@ -1,0 +1,16 @@
+.deps/
+.venv/
+.env-alfworld/
+.env
+data/
+models/
+runs/
+results/
+.cache/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.log
+*.safetensors
+*.pt
+*.bin
