@@ -58,7 +58,11 @@ class RemoteEngine:
         self.adapter = None
         self.process.start()
         child.close()
-        self._receive()
+        try:
+            self._receive()
+        except BaseException:
+            self.close()
+            raise
 
     def _receive(self):
         if not self.connection.poll(1800):

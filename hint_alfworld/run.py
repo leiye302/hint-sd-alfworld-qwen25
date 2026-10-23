@@ -79,6 +79,11 @@ def launch(args):
         raise ValueError('Downloaded model receipt is not the pinned base model')
     if any(sha(model_directory / name) != item['sha256'] for name, item in model_receipt['files'].items()):
         raise ValueError('Base model file checksum differs from download receipt')
+    if args.eval_checkpoint:
+        checkpoint_complete(args.eval_checkpoint)
+        source_binding = json.loads((args.eval_checkpoint.parent / 'binding.json').read_text())
+        if source_binding['model'] != config['model']:
+            raise ValueError('Evaluation checkpoint belongs to a different backbone/revision')
     training_python = HINT / '.venv/bin/python'
     environment_python = Path(os.environ.get('HINTSD_ENV_PYTHON', ROOT / '.env-alfworld/bin/python'))
     if not training_python.is_file() or not environment_python.is_file():

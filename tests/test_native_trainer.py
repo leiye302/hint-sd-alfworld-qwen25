@@ -11,6 +11,29 @@ sys.path.insert(0, str(ROOT))
 from hint_alfworld.common import HINT, checkpoint_complete
 
 
+@pytest.mark.parametrize('size', ['1.5b', '3b'])
+def test_actual_native_cli_and_schedule_resolution(size, tmp_path):
+    try:
+        version = tuple(map(int, importlib.metadata.version('transformers').split('.')[:2]))
+    except importlib.metadata.PackageNotFoundError:
+        pytest.skip('Pinned CLI integration dependencies not installed')
+    if version < (5, 17):
+        pytest.skip('This integration test requires the pinned original Transformers version')
+    pytest.importorskip('datasets')
+    sys.path.insert(0, str(HINT))
+    from hint_alfworld.train import native_arguments
+    from hint_alfworld.common import load
+    from src.train.train import build_training_args
+    recipe = load('experiment.json')
+    arguments = native_arguments(recipe, tmp_path / size, tmp_path / 'output')
+    training = build_training_args(arguments, has_eval_dataset=False)
+    assert training.max_steps == 150
+    assert training.get_warmup_steps(150) == 8
+    assert arguments.rollout_n == 4 and arguments.ema_decay == 0.999
+    assert arguments.lora_target_modules == 'q_proj,v_proj'
+    assert training.gradient_accumulation_steps == 2 and training.save_total_limit == 2
+
+
 def test_original_trainer_two_cpu_updates_and_checkpoint(tmp_path):
     # The pinned Trainer uses APIs added after 5.2; older local installations are not silently changed.
     try:

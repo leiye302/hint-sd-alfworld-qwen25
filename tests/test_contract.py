@@ -280,6 +280,77 @@ def test_native_teacher_forward_is_no_grad():
     assert 'student_param.detach()' in source
 
 
+def test_loopback_client_works_without_requests_or_environment_proxy(monkeypatch):
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from hint_alfworld.environment import Client
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            request = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
+            encoded = json.dumps({'received': request, 'path': self.path}).encode()
+            self.send_response(200)
+            self.send_header('Content-Length', str(len(encoded)))
+            self.end_headers()
+            self.wfile.write(encoded)
+        def log_message(self, *args):
+            pass
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    monkeypatch.setenv('HTTP_PROXY', 'http://invalid.local:1')
+    try:
+        result = Client(f'http://127.0.0.1:{server.server_port}').call('health', check='cpu')
+        assert result == {'received': {'check': 'cpu'}, 'path': '/health'}
+    finally:
+        server.shutdown()
+        server.server_close()
+        worker.join()
+
+
+def test_rollout_preserves_generated_ids_and_releases_every_game(monkeypatch):
+    sys.path.insert(0, str(HINT))
+    from hint_alfworld import rollout
+    class LocalService:
+        instances = {}
+        def __init__(self, url):
+            pass
+        def call(self, operation, **values):
+            if operation == 'create':
+                identity = values['task']['task_id']
+                self.instances[identity] = False
+                return {'instance_id': identity, 'observation': 'Your task is to: inspect desk',
+                        'admissible_commands': ['look'], 'task': 'inspect desk', 'history': []}
+            if operation == 'release':
+                self.instances[values['instance_id']] = True
+                return {'released': True}
+            return {'observation': 'looked at desk', 'admissible_commands': ['look'], 'task': 'inspect desk',
+                    'history': [], 'command': 'look', 'action_valid': True, 'executable': True,
+                    'won': True, 'terminated': True, 'reward': 10.0}
+    class RolloutHarness:
+        recipe = load('experiment.json')
+        environment_url = 'not-a-network-request'
+        student_adapter_name = 'student'
+        def _ensure_vllm_adapter_weights(self, adapter):
+            assert adapter == 'student'
+        def _apply_chat_template(self, messages, add_generation_prompt):
+            return messages[0]['content'] + '\nassistant-header'
+        def _encode_text(self, text):
+            return list(map(ord, text))
+        def _sample_model_outputs(self, prompts, **kwargs):
+            return [SimpleNamespace(prompt_token_ids=value['prompt_token_ids'],
+                outputs=[SimpleNamespace(text='<think>check</think><action>look</action>',
+                                         token_ids=[7, 8, 9], finish_reason='stop')]) for value in prompts]
+    monkeypatch.setattr(rollout, 'Client', LocalService)
+    rows = [{'task_id': 'game-one', 'seed': 1}, {'task_id': 'game-two', 'seed': 2}]
+    batch = rollout.run_rollouts(rows, RolloutHarness(), rollout_n=1, temperature=0.4)
+    assert all(LocalService.instances.values()) and all(episode.released for episode in batch.episodes)
+    assert batch.scores == [1., 1.]
+    for episode in batch.episodes:
+        metadata = episode.steps[0].agent_metadata
+        assert metadata['completion_token_ids'] == [7, 8, 9]
+        assert metadata['prompt_token_ids'][-len('assistant-header'):] == list(map(ord, 'assistant-header'))
+
+
 def test_no_private_dependencies_or_absolute_author_paths():
     import re
     for folder in [ROOT / 'hint_alfworld', ROOT / 'scripts', ROOT / 'configs']:

@@ -8,6 +8,7 @@ import sys
 import threading
 import uuid
 import signal
+import urllib.request
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -143,13 +144,13 @@ class Client:
         self.url = url.rstrip('/')
 
     def call(self, operation, **payload):
-        import requests
         # Environment mutations are deliberately NOT blindly retried after transport failures.
-        with requests.Session() as session:
-            session.trust_env = False
-            response = session.post(self.url + '/' + operation, json=payload, timeout=300)
-            response.raise_for_status()
-            return response.json()
+        request = urllib.request.Request(self.url + '/' + operation,
+            data=json.dumps(payload).encode(), headers={'Content-Type': 'application/json'}, method='POST')
+        # The stdlib controller also works on a fresh system Python without pip-installed requests.
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(request, timeout=300) as response:
+            return json.load(response)
 
 
 def main():

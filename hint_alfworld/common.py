@@ -78,6 +78,8 @@ def verify_sources():
         source = lock[key]
         if git(directory, 'rev-parse', 'HEAD') != source['commit']:
             raise ValueError('Upstream revision differs: ' + key)
+        if git(directory, 'diff', '--name-only', 'HEAD'):
+            raise ValueError('Upstream tracked files are dirty: ' + key)
         for name, expected in source['files'].items():
             content = (directory / name).read_bytes().replace(b'\r\n', b'\n')
             if hashlib.sha256(content).hexdigest() != expected:
